@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { X, Trash2, CheckCircle2, Clock3, AlertCircle } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { isTaskActive, isTaskOverdue, compareTasks } from '../lib/taskHelpers';
@@ -11,12 +11,20 @@ type Props = {
 };
 
 export function EmployeeDetailModal({ employee, onClose, onDeleted }: Props) {
-  const { tasks, getEmployeeName, updateEmployee, deleteEmployee } = useData();
+  const { tasks, updateEmployee, deleteEmployee } = useData();
   const [name, setName] = useState(employee.name);
   const [role, setRole] = useState(employee.role);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   const assignedTasks = useMemo(
     () => tasks.filter((task) => task.assigned_to === employee.id).sort(compareTasks),
@@ -35,7 +43,9 @@ export function EmployeeDetailModal({ employee, onClose, onDeleted }: Props) {
     setSaving(true);
     setError(null);
     try {
-      await updateEmployee(employee.id, { name: name.trim(), role: role.trim() });
+      const updated = await updateEmployee(employee.id, { name: name.trim(), role: role.trim() });
+      setName(updated.name);
+      setRole(updated.role);
     } catch (err) {
       console.error('updateEmployee failed:', err);
       setError('Could not update this employee.');
@@ -66,8 +76,8 @@ export function EmployeeDetailModal({ employee, onClose, onDeleted }: Props) {
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white shadow-xl">
         <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">{employee.name}</h2>
-            <p className="mt-1 text-sm text-slate-500">{employee.role}</p>
+            <h2 className="text-xl font-semibold text-slate-900">{name}</h2>
+            <p className="mt-1 text-sm text-slate-500">{role}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="Close employee details">
             <X className="h-5 w-5" />
@@ -113,9 +123,7 @@ export function EmployeeDetailModal({ employee, onClose, onDeleted }: Props) {
                       <p className="truncate text-sm font-medium text-slate-800">{task.title}</p>
                       <p className="text-xs text-slate-500">{task.status.replace('_', ' ')} · {task.priority}</p>
                     </div>
-                    {isTaskOverdue(task) ? (
-                      <span className="shrink-0 text-xs font-medium text-red-600">Overdue</span>
-                    ) : null}
+                    {isTaskOverdue(task) ? <span className="shrink-0 text-xs font-medium text-red-600">Overdue</span> : null}
                   </div>
                 ))
               )}
@@ -137,12 +145,7 @@ export function EmployeeDetailModal({ employee, onClose, onDeleted }: Props) {
   );
 }
 
-function Metric({
-  icon: Icon,
-  label,
-  value,
-  danger = false,
-}: {
+function Metric({ icon: Icon, label, value, danger = false }: {
   icon: typeof Clock3;
   label: string;
   value: number;
