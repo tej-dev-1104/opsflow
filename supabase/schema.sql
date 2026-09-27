@@ -10,8 +10,8 @@ create table if not exists public.employees (
 
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
-  title text not null,
-  description text,
+  title text not null check (btrim(title) <> '') check (char_length(title) <= 200),
+  description text check (description is null or char_length(description) <= 2000),
   assigned_to uuid references public.employees(id) on delete set null,
   priority text not null default 'medium' check (priority in ('low', 'medium', 'high')),
   status text not null default 'todo' check (status in ('todo', 'in_progress', 'completed')),
@@ -20,7 +20,10 @@ create table if not exists public.tasks (
   updated_at timestamptz not null default now()
 );
 
+-- Repeated queries filter/sort by these columns (My Work, status filters, overdue calculation).
 create index if not exists tasks_assigned_to_idx on public.tasks(assigned_to);
+create index if not exists tasks_status_idx on public.tasks(status);
+create index if not exists tasks_due_date_idx on public.tasks(due_date);
 
 -- Keep updated_at fresh
 create or replace function public.set_updated_at()

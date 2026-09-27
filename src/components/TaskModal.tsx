@@ -131,6 +131,7 @@ export function TaskModal({
               placeholder="What needs to get done?"
               autoFocus
               required
+              maxLength={200}
             />
           </Field>
 
@@ -140,6 +141,7 @@ export function TaskModal({
               value={form.description ?? ''}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Optional details"
+              maxLength={2000}
             />
           </Field>
 

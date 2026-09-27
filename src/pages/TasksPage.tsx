@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { EmptyState } from '../components/EmptyState';
 import { TaskRow } from '../components/TaskRow';
-import { compareTasks, isTaskOverdue } from '../lib/taskHelpers';
+import { Toast } from '../components/Toast';
+import { compareTasks, isTaskOverdue, statusLabel } from '../lib/taskHelpers';
 import type { Task, TaskStatus } from '../types';
 
 type FilterKey = 'all' | 'todo' | 'in_progress' | 'completed' | 'overdue';
@@ -26,6 +27,10 @@ export function TasksPage({ onOpenTask, onNewTask }: TasksPageProps) {
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<FilterKey>('all');
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<string | null>(null);
+
+  const hasActiveFilters = query.trim() !== '' || filter !== 'all';
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -40,13 +45,27 @@ export function TasksPage({ onOpenTask, onNewTask }: TasksPageProps) {
       .sort(compareTasks);
   }, [tasks, query, filter]);
 
+  const clearFilters = () => {
+    setQuery('');
+    setFilter('all');
+  };
+
   const handleStatusChange = async (task: Task, status: TaskStatus) => {
+    if (pendingIds.has(task.id)) return; // already saving; ignore a fast double-change
     setStatusError(null);
+    setPendingIds((prev) => new Set(prev).add(task.id));
     try {
       await updateTask(task.id, { status });
+      setToast(`Marked as ${statusLabel(status)}`);
     } catch (err) {
       console.error('Status update failed:', err);
       setStatusError("Couldn't update status. Please try again.");
+    } finally {
+      setPendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(task.id);
+        return next;
+      });
     }
   };
 
@@ -77,7 +96,7 @@ export function TasksPage({ onOpenTask, onNewTask }: TasksPageProps) {
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {filters.map((item) => (
             <button
               key={item.key}
@@ -92,8 +111,22 @@ export function TasksPage({ onOpenTask, onNewTask }: TasksPageProps) {
               {item.label}
             </button>
           ))}
+          {hasActiveFilters ? (
+            <button
+              type="button"
+              onClick={clearFilters}
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear filters
+            </button>
+          ) : null}
         </div>
       </div>
+
+      <p className="text-sm text-slate-500">
+        Showing {filtered.length} of {tasks.length} tasks
+      </p>
 
       {statusError ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{statusError}</p>
@@ -112,7 +145,11 @@ export function TasksPage({ onOpenTask, onNewTask }: TasksPageProps) {
             <div className="p-4">
               <EmptyState
                 title="No tasks found."
-                description="Try another search or create a new task."
+                description={
+                  hasActiveFilters
+                    ? 'Try another search or clear your filters.'
+                    : 'Create a new task to get started.'
+                }
               />
             </div>
           ) : (
@@ -123,11 +160,14 @@ export function TasksPage({ onOpenTask, onNewTask }: TasksPageProps) {
                 employeeName={getEmployeeName(task.assigned_to)}
                 onClick={() => onOpenTask(task)}
                 onStatusChange={(status) => handleStatusChange(task, status)}
+                statusSaving={pendingIds.has(task.id)}
               />
             ))
           )}
         </div>
       </div>
+
+      <Toast message={toast} onClose={() => setToast(null)} />
     </div>
   );
 }

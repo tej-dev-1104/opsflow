@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { TaskModal } from './components/TaskModal';
@@ -17,8 +17,10 @@ function AppShell() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [prefillTitle, setPrefillTitle] = useState('');
   const [toast, setToast] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   const openCreate = useCallback((title = '') => {
+    triggerRef.current = document.activeElement as HTMLElement | null;
     setModalMode('create');
     setEditingTask(null);
     setPrefillTitle(title);
@@ -26,6 +28,7 @@ function AppShell() {
   }, []);
 
   const openEdit = useCallback((task: Task) => {
+    triggerRef.current = document.activeElement as HTMLElement | null;
     setModalMode('edit');
     setEditingTask(task);
     setPrefillTitle('');
@@ -34,6 +37,12 @@ function AppShell() {
 
   const closeModal = useCallback(() => setModalOpen(false), []);
   const closeToast = useCallback(() => setToast(null), []);
+
+  // Return keyboard focus to whatever opened the modal, once it's gone from the DOM.
+  useEffect(() => {
+    if (modalOpen) return;
+    triggerRef.current?.focus?.();
+  }, [modalOpen]);
 
   const handleSave = async (input: CreateTaskInput) => {
     if (modalMode === 'create') {

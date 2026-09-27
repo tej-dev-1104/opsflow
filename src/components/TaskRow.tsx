@@ -7,9 +7,10 @@ type TaskRowProps = {
   employeeName: string;
   onClick: () => void;
   onStatusChange?: (status: TaskStatus) => void;
+  statusSaving?: boolean;
 };
 
-export function TaskRow({ task, employeeName, onClick, onStatusChange }: TaskRowProps) {
+export function TaskRow({ task, employeeName, onClick, onStatusChange, statusSaving }: TaskRowProps) {
   const overdue = isTaskOverdue(task);
 
   return (
@@ -33,8 +34,9 @@ export function TaskRow({ task, employeeName, onClick, onStatusChange }: TaskRow
       </button>
       {onStatusChange ? (
         <select
-          className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+          className="w-full rounded-md border border-slate-200 bg-white px-2 py-1 text-xs font-medium text-slate-700 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 disabled:opacity-50"
           value={task.status}
+          disabled={statusSaving}
           onClick={(e) => e.stopPropagation()}
           onChange={(e) => onStatusChange(e.target.value as TaskStatus)}
           aria-label={`Status for ${task.title}`}

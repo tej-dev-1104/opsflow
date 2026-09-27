@@ -58,6 +58,10 @@ export function TeamPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Team</h1>
         <p className="mt-1 text-sm text-slate-500">People at Sunrise Traders and their current workload.</p>
+        <p className="mt-1 text-sm text-slate-500">
+          {employees.length} {employees.length === 1 ? 'employee' : 'employees'} · {tasks.length}{' '}
+          {tasks.length === 1 ? 'task' : 'tasks'}
+        </p>
       </div>
 
       <form
