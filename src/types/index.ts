@@ -39,3 +39,5 @@ export type CreateEmployeeInput = {
   name: string;
   role: string;
 };
+
+export type UpdateEmployeeInput = Partial<CreateEmployeeInput>;
