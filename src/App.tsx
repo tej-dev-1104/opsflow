@@ -3,11 +3,14 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { TaskModal } from './components/TaskModal';
 import { Toast } from './components/Toast';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
 import { Dashboard } from './pages/Dashboard';
+import { LoginPage } from './pages/LoginPage';
 import { MyWorkPage } from './pages/MyWorkPage';
 import { TasksPage } from './pages/TasksPage';
 import { TeamPage } from './pages/TeamPage';
+import { isSupabaseConfigured } from './lib/supabase';
 import type { CreateTaskInput, Task } from './types';
 
 function AppShell() {
@@ -38,7 +41,6 @@ function AppShell() {
   const closeModal = useCallback(() => setModalOpen(false), []);
   const closeToast = useCallback(() => setToast(null), []);
 
-  // Return keyboard focus to whatever opened the modal, once it's gone from the DOM.
   useEffect(() => {
     if (modalOpen) return;
     triggerRef.current?.focus?.();
@@ -65,10 +67,7 @@ function AppShell() {
       <Layout onNewTask={() => openCreate()}>
         <Routes>
           <Route path="/" element={<Dashboard onOpenTask={openEdit} onQuickAdd={openCreate} />} />
-          <Route
-            path="/tasks"
-            element={<TasksPage onOpenTask={openEdit} onNewTask={() => openCreate()} />}
-          />
+          <Route path="/tasks" element={<TasksPage onOpenTask={openEdit} onNewTask={() => openCreate()} />} />
           <Route path="/my-work" element={<MyWorkPage onOpenTask={openEdit} />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -92,12 +91,32 @@ function AppShell() {
   );
 }
 
+function AuthGate() {
+  const { user, loading } = useAuth();
+
+  if (!isSupabaseConfigured) {
+    return <DataProvider><AppShell /></DataProvider>;
+  }
+
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">
+        Checking your session...
+      </main>
+    );
+  }
+
+  if (!user) return <LoginPage />;
+
+  return <DataProvider><AppShell /></DataProvider>;
+}
+
 export default function App() {
   return (
     <BrowserRouter>
-      <DataProvider>
-        <AppShell />
-      </DataProvider>
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
     </BrowserRouter>
   );
 }

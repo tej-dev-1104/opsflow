@@ -1,13 +1,16 @@
 import { useMemo, useState, type FormEvent } from 'react';
 import { useData } from '../context/DataContext';
 import { EmployeeCard } from '../components/EmployeeCard';
+import { EmployeeDetailModal } from '../components/EmployeeDetailModal';
 import { EmptyState } from '../components/EmptyState';
 import { isTaskActive, isTaskOverdue } from '../lib/taskHelpers';
+import type { Employee } from '../types';
 
 export function TeamPage() {
   const { employees, tasks, loading, error, createEmployee } = useData();
   const [name, setName] = useState('');
   const [role, setRole] = useState('');
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -64,26 +67,11 @@ export function TeamPage() {
         </p>
       </div>
 
-      <form
-        onSubmit={handleAdd}
-        className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
-      >
+      <form onSubmit={handleAdd} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-slate-900">+ Add Employee</h2>
         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto]">
-          <input
-            className="input"
-            aria-label="Name"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-          <input
-            className="input"
-            aria-label="Role"
-            placeholder="Role"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          />
+          <input className="input" aria-label="Name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} />
+          <input className="input" aria-label="Role" placeholder="Role" value={role} onChange={(e) => setRole(e.target.value)} maxLength={100} />
           <button type="submit" className="btn-primary" disabled={saving}>
             {saving ? 'Adding...' : 'Add Employee'}
           </button>
@@ -104,10 +92,19 @@ export function TeamPage() {
               total={total}
               active={active}
               overdue={overdue}
+              onClick={() => setSelectedEmployee(employee)}
             />
           ))}
         </div>
       )}
+
+      {selectedEmployee ? (
+        <EmployeeDetailModal
+          employee={selectedEmployee}
+          onClose={() => setSelectedEmployee(null)}
+          onDeleted={() => setSelectedEmployee(null)}
+        />
+      ) : null}
     </div>
   );
 }
