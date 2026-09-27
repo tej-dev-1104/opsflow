@@ -1,6 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import type { CreateEmployeeInput, CreateTaskInput, Employee, Task, UpdateTaskInput } from '../types';
+import type {
+  CreateEmployeeInput,
+  CreateTaskInput,
+  Employee,
+  Task,
+  UpdateEmployeeInput,
+  UpdateTaskInput,
+} from '../types';
 import * as employeeService from '../services/employees';
 import * as taskService from '../services/tasks';
 import { isTaskActive, isTaskOverdue } from '../lib/taskHelpers';
@@ -15,6 +22,8 @@ type DataContextValue = {
   updateTask: (id: string, input: UpdateTaskInput) => Promise<Task>;
   deleteTask: (id: string) => Promise<void>;
   createEmployee: (input: CreateEmployeeInput) => Promise<Employee>;
+  updateEmployee: (id: string, input: UpdateEmployeeInput) => Promise<Employee>;
+  deleteEmployee: (id: string) => Promise<void>;
   getEmployeeName: (id: string | null) => string;
   stats: {
     total: number;
@@ -80,6 +89,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return created;
   }, []);
 
+  const updateEmployee = useCallback(async (id: string, input: UpdateEmployeeInput) => {
+    const updated = await employeeService.updateEmployee(id, input);
+    setEmployees((prev) =>
+      prev
+        .map((employee) => (employee.id === id ? updated : employee))
+        .sort((a, b) => a.name.localeCompare(b.name))
+    );
+    return updated;
+  }, []);
+
+  const deleteEmployee = useCallback(async (id: string) => {
+    await employeeService.deleteEmployee(id);
+    setEmployees((prev) => prev.filter((employee) => employee.id !== id));
+    setTasks((prev) =>
+      prev.map((task) => (task.assigned_to === id ? { ...task, assigned_to: null } : task))
+    );
+  }, []);
+
   const getEmployeeName = useCallback(
     (id: string | null) => {
       if (!id) return 'Unassigned';
@@ -111,6 +138,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       updateTask,
       deleteTask,
       createEmployee,
+      updateEmployee,
+      deleteEmployee,
       getEmployeeName,
       stats,
     }),
@@ -124,6 +153,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       updateTask,
       deleteTask,
       createEmployee,
+      updateEmployee,
+      deleteEmployee,
       getEmployeeName,
       stats,
     ]
