@@ -321,7 +321,7 @@ OpsFlow focuses on one simple goal:
 ## Hackathon Submission
 
 **Live Application:**
-`<VERCEL_URL>` (not yet deployed)
+[https://opsflow-murex.vercel.app](https://opsflow-murex.vercel.app)
 
 **GitHub Repository:**
 `https://github.com/tej-dev-1104/opsflow`
