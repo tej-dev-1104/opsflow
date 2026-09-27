@@ -90,8 +90,7 @@ The dashboard provides an at-a-glance view of the team's current workload and wo
 
 ### Deployment
 
-* **Docker**
-* **Google Cloud Run**
+* **Vercel**
 
 ---
 
@@ -274,7 +273,7 @@ The production build should complete successfully before deployment.
 
 ## Deployment
 
-OpsFlow is designed to run as a containerized web application on **Google Cloud Run**.
+OpsFlow is deployed as a static production build on **Vercel**.
 
 The production deployment uses:
 
@@ -283,14 +282,12 @@ React + Vite
       ↓
 Production Build
       ↓
-Docker Container
-      ↓
-Google Cloud Run
+Vercel
       ↓
 Public Application URL
 ```
 
-Set the required Supabase environment variables in the Cloud Run service configuration.
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as environment variables in the Vercel project settings (Project → Settings → Environment Variables), matching `.env.example`.
 
 ---
 
@@ -324,7 +321,7 @@ OpsFlow focuses on one simple goal:
 ## Hackathon Submission
 
 **Live Application:**
-`<GOOGLE_CLOUD_RUN_URL>` (not yet deployed)
+`<VERCEL_URL>` (not yet deployed)
 
 **GitHub Repository:**
 `https://github.com/tej-dev-1104/opsflow`
