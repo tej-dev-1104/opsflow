@@ -3,14 +3,11 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { TaskModal } from './components/TaskModal';
 import { Toast } from './components/Toast';
-import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
 import { Dashboard } from './pages/Dashboard';
-import { LoginPage } from './pages/LoginPage';
 import { MyWorkPage } from './pages/MyWorkPage';
 import { TasksPage } from './pages/TasksPage';
 import { TeamPage } from './pages/TeamPage';
-import { isSupabaseConfigured } from './lib/supabase';
 import type { CreateTaskInput, Task } from './types';
 
 function AppShell() {
@@ -91,32 +88,12 @@ function AppShell() {
   );
 }
 
-function AuthGate() {
-  const { user, loading } = useAuth();
-
-  if (!isSupabaseConfigured) {
-    return <DataProvider><AppShell /></DataProvider>;
-  }
-
-  if (loading) {
-    return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 text-sm text-slate-500">
-        Checking your session...
-      </main>
-    );
-  }
-
-  if (!user) return <LoginPage />;
-
-  return <DataProvider><AppShell /></DataProvider>;
-}
-
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AuthGate />
-      </AuthProvider>
+      <DataProvider>
+        <AppShell />
+      </DataProvider>
     </BrowserRouter>
   );
 }
